@@ -17,20 +17,22 @@ export default function Home(): JSX.Element {
     fetchNextPage,
     hasNextPage,
   } = useInfiniteQuery(
-    {
-      queryKey: ['images'],
+    
+      'images',
       // TODO AXIOS REQUEST WITH PARAM
-      queryFn:  async ({ pageParam = null })=>{
-                  const res = await api.get(`/api/images?after=${pageParam}`);
-                  return res.data;
-                },
+      async ({ pageParam = null })=>{
+        const res = await api.get(`/api/images`,{params:{after: pageParam}});
+        return res.data;
+      },
       // TODO GET AND RETURN NEXT PAGE PARAM
-      getNextPageParam: (after) => after || null,
+    {
+      getNextPageParam: lastRequest => lastRequest?.after || null,
     }
   );
 
   const formattedData = useMemo(() => {
-    return data?.pages[0].data || [];
+    const allData = data?.pages.flatMap(page => page.data);
+    return allData || [];
   }, [data]);
 
   // TODO RENDER LOADING SCREEN
@@ -52,14 +54,14 @@ export default function Home(): JSX.Element {
       <Header />
 
       <Box maxW={1120} px={20} mx="auto" my={20}>
-        <CardList cards={formattedData} />
+        <CardList cards={formattedData}/>
         {/* TODO RENDER LOAD MORE BUTTON IF DATA HAS NEXT PAGE */}
 
-        {isFetchingNextPage
-            ? 'Carregando...'
-            : hasNextPage
-            ? <Button onClick={()=>fetchNextPage}>Carregar mais</Button>
-            : ''}
+        {hasNextPage && (
+          <Button mt={8} onClick={() => fetchNextPage()}>
+            {isFetchingNextPage ? 'Carregando...' : 'Carregar mais'}
+          </Button>
+        )}
       </Box>
     </>
   );
